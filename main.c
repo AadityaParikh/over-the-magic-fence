@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 
 	Camera3D camera = { 0 };
     camera.position = (Vector3){ 0.0f, 1.0f, 10.0f };  // Camera position
-    camera.target = (Vector3){ 0.0f, 1.0f, 0.0f };      // Camera looking at point
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
     camera.fovy = 45.0f;                                // Camera field-of-view Y
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
@@ -23,17 +23,18 @@ int main(int argc, char** argv) {
 	Vector3 pos = {0.0f,0.0f,0.0f};
 
 	while(!WindowShouldClose()) {
-		
 
 		UpdateCamera(&camera);
 
 		BeginDrawing();
-			ClearBackground(WHITE);
+			ClearBackground(SKYBLUE);
 
 			BeginMode3D(camera);
 
-				DrawSphere(pos,1.0f,BLACK);
-				DrawGrid(10,1.0f);
+				DrawGizmo(pos);
+				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){32.0f,32.0f},DARKGREEN);
+
+				DrawRay((Ray){0.0f,0.0f,0.0f,0.5f,0.5f,0.0f},BLACK);
 
 			EndMode3D();
 
