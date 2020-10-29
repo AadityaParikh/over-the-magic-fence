@@ -1,15 +1,12 @@
 #include <raylib.h>
-#include <raymath.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 
 int main(int argc, char** argv) {
-	//int screenWidth = GetMonitorWidth(0);
-	//int screenHeight = GetMonitorHeight(0);
-	int screenWidth = 840;
-	int screenHeight = 600;
+	int screenWidth = GetMonitorWidth(0);
+	int screenHeight = GetMonitorHeight(0);
 
 	InitWindow(screenWidth,screenHeight,"Over The Magic Fence");
 
@@ -35,6 +32,11 @@ int main(int argc, char** argv) {
 	int frame = 0;
 	int coolDown = 0;
 
+	Vector3 addVector3(Vector3 v1,Vector3 v2) {
+		Vector3 result = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
+		return result;
+	}
+
 	while(!WindowShouldClose()) {
 
 		UpdateCamera(&camera);
@@ -48,32 +50,31 @@ int main(int argc, char** argv) {
 
 		}*/
 		mouse = GetMouseRay(GetMousePosition(),camera);
-		//mouse.position.y *= 0.5f;
 		spellPos = mouse.position;
 		spellDir = mouse.direction;
 
 		temp = spellDir.x;
 		spellDir.x = spellDir.z;
-		spellDir.z = -temp;
-		spellDir.y = 0.25f;
+		spellDir.z = -temp; // rotating it
+		spellDir.y = 0.0f;
+		spellPos.y = 0.25f;
 
 		frame++;
-		test.direction.x+=0.001f;
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
 
 			BeginMode3D(camera);
 
-				DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
+				//DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
 				DrawModelWires(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,BLACK);
 				DrawGizmo((Vector3){0.0f,0.0f,0.0f});
 				DrawSphere(spellPos,0.1f,BLACK);
-				DrawSphere(Vector3Add(spellDir,spellPos),0.1f,BLACK);
+				DrawSphere(addVector3(spellDir,spellPos),0.1f,BLACK);
 				DrawSphere(spellDir,0.1f,BLACK);
 				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
 
-				DrawRay(mouse,BLACK);
+				DrawRay((Ray){spellPos,spellDir},BLACK);
 				DrawRay(test,BLACK);
 				
 
@@ -83,5 +84,7 @@ int main(int argc, char** argv) {
 		EndDrawing();
 	}
 	CloseWindow();
+
+
 }
 
