@@ -5,8 +5,10 @@
 
 
 int main(int argc, char** argv) {
-	int screenWidth = 1920;
-	int screenHeight = 1080;
+	//int screenWidth = GetMonitorWidth(0);
+	//int screenHeight = GetMonitorHeight(0);
+	int screenWidth = 840;
+	int screenHeight = 600;
 
 	InitWindow(screenWidth,screenHeight,"Over The Magic Fence");
 
@@ -22,9 +24,10 @@ int main(int argc, char** argv) {
 
 	Model ring = LoadModel("Art/Models/ring.obj");
 
-	Vector3 gizmoPos = {0.0f,0.0f,0.0f};
+	Vector3 spellPos = {0.0f,0.0f,0.0f};
 
 	Ray mouse = {0};
+	Ray test = {0.0f,1.0f,0.0f,1.0f,1.0f,0.0f};
 	
 	float temp = 0.0f;
 	int frame = 0;
@@ -35,17 +38,22 @@ int main(int argc, char** argv) {
 		UpdateCamera(&camera);
 
 		frame++;
+		test.direction.x+=0.001f;
 
 		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&coolDown==0) {
 			mouse = GetMouseRay(GetMousePosition(),camera);
-			temp = mouse.direction.x;
-			mouse.direction.x = mouse.direction.z;
-			mouse.direction.z = (-1.0f)*temp; // rays seem to be rotated
+			/*temp = mouse.direction.x;
+			mouse.direction.x = -mouse.direction.z;
+			mouse.direction.z = -temp; // rays seem to be rotated*/
 
-			mouse.position.y *= 0.5f;
+			//mouse.direction.x *= -1.0f;
+			//mouse.direction.z *= 1.0f;
+
+			//mouse.position.y *= 0.5f;
 		}
 
-		gizmoPos = mouse.position;
+		spellPos = mouse.position;
+
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
@@ -53,11 +61,15 @@ int main(int argc, char** argv) {
 			BeginMode3D(camera);
 
 				DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
-				DrawGizmo(gizmoPos);
 				DrawModelWires(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,BLACK);
+				DrawGizmo((Vector3){0.0f,0.0f,0.0f});
+				DrawSphere(spellPos,0.1f,BLACK);
+				DrawSphere(mouse.direction,0.1f,BLACK);
 				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
 
 				DrawRay(mouse,BLACK);
+				DrawRay(test,BLACK);
+				
 
 			EndMode3D();
 
