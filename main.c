@@ -22,28 +22,39 @@ int main(int argc, char** argv) {
 
 	Model ring = LoadModel("Art/Models/ring.obj");
 
-	Vector3 pos = {0.0f,0.0f,0.0f};
+	Vector3 gizmoPos = {0.0f,0.0f,0.0f};
 
 	Ray mouse = {0};
 	
-	int frames = 0;
+	float temp = 0.0f;
+	int frame = 0;
+	int coolDown = 0;
 
 	while(!WindowShouldClose()) {
-		frames++;
 
 		UpdateCamera(&camera);
 
-		if(frames%600==0) { // 10 sec
-			Ray mouse = GetMouseRay(GetMousePosition(),camera);
+		frame++;
+
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&coolDown==0) {
+			mouse = GetMouseRay(GetMousePosition(),camera);
+			temp = mouse.direction.x;
+			mouse.direction.x = mouse.direction.z;
+			mouse.direction.z = (-1.0f)*temp; // rays seem to be rotated
+
+			mouse.position.y *= 0.5f;
 		}
+
+		gizmoPos = mouse.position;
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
 
 			BeginMode3D(camera);
 
-				DrawModel(ring,pos,1.0f,GRAY);
-				DrawModelWires(ring,pos,1.0f,BLACK);
+				DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
+				DrawGizmo(gizmoPos);
+				DrawModelWires(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,BLACK);
 				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
 
 				DrawRay(mouse,BLACK);
