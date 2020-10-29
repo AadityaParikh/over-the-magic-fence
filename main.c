@@ -3,11 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#define SCREENWIDTH 800
-#define SCREENHEIGHT 640
 
 int main(int argc, char** argv) {
-	InitWindow(SCREENWIDTH,SCREENHEIGHT,"Over The Magic Fence");
+	int screenWidth = 1920;
+	int screenHeight = 1080;
+
+	InitWindow(screenWidth,screenHeight,"Over The Magic Fence");
 
 	SetTargetFPS(60);
 
@@ -19,22 +20,33 @@ int main(int argc, char** argv) {
     camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
 	SetCameraMode(camera, CAMERA_FIRST_PERSON);
 
+	Model ring = LoadModel("Art/Models/ring.obj");
 
 	Vector3 pos = {0.0f,0.0f,0.0f};
 
+	Ray mouse = {0};
+	
+	int frames = 0;
+
 	while(!WindowShouldClose()) {
+		frames++;
 
 		UpdateCamera(&camera);
+
+		if(frames%600==0) { // 10 sec
+			Ray mouse = GetMouseRay(GetMousePosition(),camera);
+		}
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
 
 			BeginMode3D(camera);
 
-				DrawGizmo(pos);
-				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){32.0f,32.0f},DARKGREEN);
+				DrawModel(ring,pos,1.0f,GRAY);
+				DrawModelWires(ring,pos,1.0f,BLACK);
+				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
 
-				DrawRay((Ray){0.0f,0.0f,0.0f,0.5f,0.5f,0.0f},BLACK);
+				DrawRay(mouse,BLACK);
 
 			EndMode3D();
 
@@ -43,3 +55,4 @@ int main(int argc, char** argv) {
 	}
 	CloseWindow();
 }
+
