@@ -9,6 +9,7 @@ typedef struct Spell {
 	Vector3 dir;
 	Vector3 sum;
 	float speed;
+	Texture2D sprites[5];
 } Spell;
 
 int main(int argc, char** argv) {
@@ -30,74 +31,82 @@ int main(int argc, char** argv) {
 	Model ring = LoadModel("Art/Models/ring.obj");
 
 	Vector3 zeroV3 = {0.0f,0.0f,0.0f};
+	Vector3 screenDir = zeroV3; // normalized vector of direction screen is pointing in
 
 	Ray mouse = {0};
 	
 	float temp = 0.0f;
 	int frame = 0;
-	int coolDown = 0;
 
-	Spell fireball = {zeroV3,zeroV3,zeroV3,0.1f};
+	Spell fireball;
+	fireball.speed = 0.5f;
+	for(int i = 0;i<4;i++) {
+		char intStr[2];
+		sprintf(intStr,"%d",i);
+		char filename[]= "Art/fireball/sprite_";
+		strcat(filename,intStr);
+		strcat(filename,".png");
+		fireball.sprites[i] = LoadTexture(filename);
+	}
 
-	Texture2D test = LoadTexture("Art/fireball/sprite_0.png");
-
-	Vector3 addVector3(Vector3 v1,Vector3 v2) {
+	Vector3 addVector3(Vector3 v1,Vector3 v2) { // add
 		Vector3 result = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
 		return result;
 	}
-	Vector3 subVector3(Vector3 v1,Vector3 v2) {
+	Vector3 subVector3(Vector3 v1,Vector3 v2) { // subtract
 		Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
 		return result;
 	}
-	Vector3 scaleVector3(Vector3 v1,float scalar) {
-		Vector3 result = { v1.x * scalar, v1.y * scalar, v1.z * scalar };
+	Vector3 scaleVector3(Vector3 vec,float scalar) { // scale
+		Vector3 result = { vec.x * scalar, vec.y * scalar, vec.z * scalar };
 		return result;
 	}
-	Vector3 lenVector3(Vector3 vec) {
-		//Vector3 result = 
+	Vector3 normVector3(Vector3 vec) { // normalize
+		float mag = sqrtf((vec.x*vec.x)+(vec.y*vec.y)+(vec.z*vec.z));
+		if(mag==0.0f) return vec;
+		Vector3 result = {vec.x/mag,vec.y/mag,vec.z/mag};
+		return result;
 	}
+
+
+	//player vars (player struct isn't necessary cause there's only 1 player);
+	int spellCooldown = 0;
+	int curSpell = 0;
+
+	Spell spells[1];
 
 	while(!WindowShouldClose()) {
 
 		UpdateCamera(&camera);
-
-		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&coolDown==0) {
-			mouse = GetMouseRay(GetMousePosition(),camera);
-			fireball.pos = mouse.position;
-			fireball.dir = mouse.direction;
-
-			temp = fireball.dir.x;
-			fireball.dir.x = fireball.dir.z;
-			fireball.dir.z = -temp; // rotating it
-			fireball.dir.y = 0.0f;
-			fireball.pos.y = 0.5f;
-			fireball.sum = addVector3(fireball.dir,fireball.pos);
-
-		}
-
 		frame++;
 
-		fireball.pos = addVector3(fireball.pos,scaleVector3(fireball.dir,0.1f)); // TODO make it not hardcoded
+		screenDir = subVector3(camera.target,camera.position);
+		screenDir.y = 0;
+		screenDir = normVector3(screenDir);
+
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&spellCooldown==0) {
+			fireball.pos = camera.position;
+			fireball.dir = screenDir;
+
+			fireball.pos.y = 0.5f;
+		}
+
+		fireball.pos = addVector3(fireball.pos,scaleVector3(fireball.dir,fireball.speed)); // TODO make it not hardcoded
 		fireball.sum = addVector3(fireball.dir,fireball.pos);
+
+
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
 
 			BeginMode3D(camera);
 
-				//DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
+				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
+				DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
-				DrawSphere(fireball.pos,0.1f,BLACK);
-				DrawSphere(fireball.sum,0.1f,BLACK);
-				DrawSphere(fireball.dir,0.1f,BLACK);
-				DrawSphereWires(camera.target,0.1f,16,16,BLACK);
-				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
 
-				DrawRay((Ray){fireball.pos,fireball.dir},BLACK);
-				DrawRay((Ray){camera.position,subVector3()},BLACK);
-
-				DrawBillboard(camera,test,fireball.sum,1.0f,WHITE);
+				DrawBillboard(camera,fireball.sprites[(frame/10)%4],fireball.sum,1.0f,WHITE);
 				
 
 			EndMode3D();
@@ -106,7 +115,6 @@ int main(int argc, char** argv) {
 		EndDrawing();
 	}
 	CloseWindow();
-
 
 }
 
