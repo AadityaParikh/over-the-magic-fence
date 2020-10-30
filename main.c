@@ -7,11 +7,11 @@
 typedef struct Spell {
 	Vector3 pos;
 	Vector3 dir;
-	Vector3 sum;
 	float speed;
 	Texture2D sprites[5];
 	char* name;
 	int coolDown;
+	float lenFromPlayer;
 } Spell;
 
 int main(int argc, char** argv) {
@@ -41,6 +41,7 @@ int main(int argc, char** argv) {
 	int frame = 0;
 	int spellCooldown = 0;
 	int curSpell = 0;
+	bool spellActive = 0;
 
 	Spell spells[1];
 	int numSpells = (sizeof(spells)/sizeof(spells[0]));
@@ -82,11 +83,13 @@ int main(int argc, char** argv) {
 		Vector3 result = {vec.x/mag,vec.y/mag,vec.z/mag};
 		return result;
 	}
+	float magVector3(Vector3 vec) { // normalize
+		float result = sqrtf((vec.x*vec.x)+(vec.y*vec.y)+(vec.z*vec.z));
+		return result;
+	}
 
 
-	char currentSpellName[50];
-	char cooldownText[50];
-	char intStrCooldown[50];
+	char debugText[10][50] = {0};
 	while(!WindowShouldClose()) {
 
 		UpdateCamera(&camera);
@@ -96,48 +99,65 @@ int main(int argc, char** argv) {
 		screenDir = subVector3(camera.target,camera.position);
 		screenDir = normVector3(screenDir);
 
-		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&spellCooldown==0) {
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&spellCooldown==0&&spellActive==0) {
 			spells[0].pos = camera.position;
 			spells[0].dir = screenDir;
 
 			spells[0].pos.y = 0.5f;
 
 			spellCooldown =  spells[curSpell].coolDown;
+			spellActive = 1;
 		}
 
 		for(int i = 0;i<numSpells;i++) {
 			spells[i].pos = addVector3(spells[i].pos,scaleVector3(spells[i].dir,spells[i].speed));
-			spells[i].sum = addVector3(spells[i].dir,spells[i].pos);
+			spells[i].lenFromPlayer = magVector3(subVector3(spells[i].pos,camera.position));
+
+			if(	spells[i].pos.y<=0.1f || // under the ground
+				spells[i].pos.x>=100.0f || // out of bounds x
+				spells[i].pos.y>=100.0f || // out of bounds y
+				spells[i].pos.z>=100.0f || // out of bounds z
+				spells[i].lenFromPlayer > 75.0f
+			) {
+
+
+				spells[i].dir = zeroV3;
+				spells[i].pos = (Vector3){0,1,0};
+				spellActive = 0;
+			}
 		}
 
 
-		strcpy(currentSpellName,"Spell Active : ");
-		strcat(currentSpellName,spells[curSpell].name);
+		strcpy(debugText[0],"Current Spell : ");
+		strcat(debugText[0],spells[curSpell].name);
 
-		strcpy(cooldownText,"Cooldown : ");
-		sprintf(intStrCooldown,"%d",spellCooldown);
-		strcat(cooldownText,intStrCooldown);
+		strcpy(debugText[1],"Spell Active : ");
+		strcat(debugText[1],spellActive?"Yes":"No");
+
+		strcpy(debugText[2],"Cooldown : ");
+		sprintf(debugText[2],"%d",spellCooldown);
+		//strcat(debugText[2],debugText[3]);
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
 
 			BeginMode3D(camera);
-
-
+				
+				
 				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
 				DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
-
-
-				DrawBillboard(camera,spells[0].sprites[(frame/10)%4],spells[0].sum,1.0f,WHITE);
 				
-
+				DrawBillboard(camera,spells[0].sprites[(frame/10)%4],spells[0].pos,1.0f,WHITE);
+				
+				
 			EndMode3D();
 
 			DrawFPS(10,10);
-			DrawText(currentSpellName,10,30,20,LIME);
-			DrawText(cooldownText,10,50,20,LIME);
+			for(int i = 0;i<(sizeof(debugText)/sizeof(debugText[0]));i++) {
+				DrawText(debugText[i],10,30+(i*20),20,LIME);
+			}
 
 		EndDrawing();
 	}
