@@ -37,16 +37,22 @@ int main(int argc, char** argv) {
 	
 	float temp = 0.0f;
 	int frame = 0;
+	int spellCooldown = 0;
+	int curSpell = 0;
 
-	Spell fireball;
-	fireball.speed = 0.5f;
-	for(int i = 0;i<4;i++) {
-		char intStr[2];
-		sprintf(intStr,"%d",i);
-		char filename[]= "Art/fireball/sprite_";
-		strcat(filename,intStr);
-		strcat(filename,".png");
-		fireball.sprites[i] = LoadTexture(filename);
+	Spell spells[1];
+	int numSpells = (sizeof(spells)/sizeof(spells[0]));
+
+	spells[0].speed = 0.5f;
+	for(int j = 0;j<numSpells;j++) {
+		for(int i = 0;i<4;i++) {
+			char intStr[2];
+			sprintf(intStr,"%d",i);
+			char filename[]= "Art/Sprites/fireball/sprite_";
+			strcat(filename,intStr);
+			strcat(filename,".png");
+			spells[j].sprites[i] = LoadTexture(filename);
+		}
 	}
 
 	Vector3 addVector3(Vector3 v1,Vector3 v2) { // add
@@ -69,11 +75,6 @@ int main(int argc, char** argv) {
 	}
 
 
-	//player vars (player struct isn't necessary cause there's only 1 player);
-	int spellCooldown = 0;
-	int curSpell = 0;
-
-	Spell spells[1];
 
 	while(!WindowShouldClose()) {
 
@@ -81,18 +82,17 @@ int main(int argc, char** argv) {
 		frame++;
 
 		screenDir = subVector3(camera.target,camera.position);
-		screenDir.y = 0;
 		screenDir = normVector3(screenDir);
 
 		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&spellCooldown==0) {
-			fireball.pos = camera.position;
-			fireball.dir = screenDir;
+			spells[0].pos = camera.position;
+			spells[0].dir = screenDir;
 
-			fireball.pos.y = 0.5f;
+			spells[0].pos.y = 0.5f;
 		}
 
-		fireball.pos = addVector3(fireball.pos,scaleVector3(fireball.dir,fireball.speed)); // TODO make it not hardcoded
-		fireball.sum = addVector3(fireball.dir,fireball.pos);
+		spells[0].pos = addVector3(spells[0].pos,scaleVector3(spells[0].dir,spells[0].speed)); // TODO make it not hardcoded
+		spells[0].sum = addVector3(spells[0].dir,spells[0].pos);
 
 
 
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
 
-				DrawBillboard(camera,fireball.sprites[(frame/10)%4],fireball.sum,1.0f,WHITE);
+				DrawBillboard(camera,spells[0].sprites[(frame/10)%4],spells[0].sum,1.0f,WHITE);
 				
 
 			EndMode3D();
