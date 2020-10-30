@@ -7,11 +7,12 @@
 typedef struct Spell {
 	Vector3 pos;
 	Vector3 dir;
+	Vector3 init;
 	float speed;
 	Texture2D sprites[5];
 	char* name;
 	int coolDown;
-	float lenFromPlayer;
+	float len;
 } Spell;
 
 int main(int argc, char** argv) {
@@ -23,11 +24,11 @@ int main(int argc, char** argv) {
 	SetTargetFPS(60);
 
 	Camera3D camera = { 0 };
-    camera.position = (Vector3){ 1.0f, 1.0f, 0.0f };  // Camera position
-    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };      // Camera looking at point
-    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f };          // Camera up vector (rotation towards target)
-    camera.fovy = 45.0f;                                // Camera field-of-view Y
-    camera.type = CAMERA_PERSPECTIVE;                   // Camera mode type
+    camera.position = (Vector3){ 1.0f, 1.0f, 0.0f };
+    camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+    camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; 
+    camera.fovy = 45.0f;
+    camera.type = CAMERA_PERSPECTIVE;
 	SetCameraMode(camera, CAMERA_FIRST_PERSON);
 
 	Model ring = LoadModel("Art/Models/ring.obj");
@@ -43,7 +44,7 @@ int main(int argc, char** argv) {
 	int curSpell = 0;
 	bool spellActive = 0;
 
-	Spell spells[1];
+	Spell spells[1] = {0};
 	int numSpells = (sizeof(spells)/sizeof(spells[0]));
 
 	spells[0].name = "fireball";
@@ -89,7 +90,7 @@ int main(int argc, char** argv) {
 	}
 
 
-	char debugText[10][50] = {0};
+	char debugText[12][50] = {0};
 	while(!WindowShouldClose()) {
 
 		UpdateCamera(&camera);
@@ -101,6 +102,7 @@ int main(int argc, char** argv) {
 
 		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&spellCooldown==0&&spellActive==0) {
 			spells[0].pos = camera.position;
+			spells[0].init = camera.position;
 			spells[0].dir = screenDir;
 
 			spells[0].pos.y = 0.5f;
@@ -111,13 +113,14 @@ int main(int argc, char** argv) {
 
 		for(int i = 0;i<numSpells;i++) {
 			spells[i].pos = addVector3(spells[i].pos,scaleVector3(spells[i].dir,spells[i].speed));
-			spells[i].lenFromPlayer = magVector3(subVector3(spells[i].pos,camera.position));
+			spells[i].len = magVector3(subVector3(spells[i].pos,spells[i].init));
 
-			if(	spells[i].pos.y<=0.1f || // under the ground
+			if(	(i == curSpell && spellActive) &&
+				(spells[i].pos.y<=0.1f || // under the ground
 				spells[i].pos.x>=100.0f || // out of bounds x
 				spells[i].pos.y>=100.0f || // out of bounds y
 				spells[i].pos.z>=100.0f || // out of bounds z
-				spells[i].lenFromPlayer > 75.0f
+				spells[i].len > 75.0f)
 			) {
 
 
@@ -125,18 +128,23 @@ int main(int argc, char** argv) {
 				spells[i].pos = (Vector3){0,1,0};
 				spellActive = 0;
 			}
+
+			if(i != curSpell || !spellActive) {
+				spells[i].pos = camera.position;
+			}
 		}
 
+		sprintf(debugText[0],"%s : %d","FPS",GetFPS());
+		sprintf(debugText[1],"%s : %s","Spell Active",spellActive?"Yes":"No");
+		sprintf(debugText[2],"%s : %d","Cooldown",spellCooldown);
 
-		strcpy(debugText[0],"Current Spell : ");
-		strcat(debugText[0],spells[curSpell].name);
-
-		strcpy(debugText[1],"Spell Active : ");
-		strcat(debugText[1],spellActive?"Yes":"No");
-
-		strcpy(debugText[2],"Cooldown : ");
-		sprintf(debugText[2],"%d",spellCooldown);
-		//strcat(debugText[2],debugText[3]);
+		sprintf(debugText[3],"%s : ","Current Spell Info");
+		sprintf(debugText[4],"\t%s : %s","Name",spells[curSpell].name);
+		sprintf(debugText[5],"\t%s : %f,%f,%f","Pos",spells[curSpell].pos.x,spells[curSpell].pos.y,spells[curSpell].pos.z);
+		sprintf(debugText[6],"\t%s : %f,%f,%f","Dir",spells[curSpell].dir.x,spells[curSpell].dir.y,spells[curSpell].dir.z);
+		sprintf(debugText[7],"\t%s : %d","MaxCooldown",spells[curSpell].coolDown);
+		sprintf(debugText[8],"\t%s : %f","Speed",spells[curSpell].speed);
+		sprintf(debugText[9],"\t%s : %f","Distance",spells[curSpell].len);
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
@@ -154,9 +162,8 @@ int main(int argc, char** argv) {
 				
 			EndMode3D();
 
-			DrawFPS(10,10);
 			for(int i = 0;i<(sizeof(debugText)/sizeof(debugText[0]));i++) {
-				DrawText(debugText[i],10,30+(i*20),20,LIME);
+				DrawText(debugText[i],10,10+(i*20),20,BLACK);
 			}
 
 		EndDrawing();
