@@ -3,17 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-
-typedef struct Spell {
-	Vector3 pos;
-	Vector3 dir;
-	Vector3 init;
-	float speed;
-	Texture2D sprites[5];
-	char* name;
-	int coolDown;
-	float len;
-} Spell;
+#include "spell.h"
 
 int main(int argc, char** argv) {
 	int screenWidth = GetMonitorWidth(0);
@@ -66,29 +56,6 @@ int main(int argc, char** argv) {
 	}
 
 	// raymath can't get linked for some systems for some reason
-	Vector3 addVector3(Vector3 v1,Vector3 v2) { // add
-		Vector3 result = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
-		return result;
-	}
-	Vector3 subVector3(Vector3 v1,Vector3 v2) { // subtract
-		Vector3 result = { v1.x - v2.x, v1.y - v2.y, v1.z - v2.z };
-		return result;
-	}
-	Vector3 scaleVector3(Vector3 vec,float scalar) { // scale
-		Vector3 result = { vec.x * scalar, vec.y * scalar, vec.z * scalar };
-		return result;
-	}
-	Vector3 normVector3(Vector3 vec) { // normalize
-		float mag = sqrtf((vec.x*vec.x)+(vec.y*vec.y)+(vec.z*vec.z));
-		if(mag==0.0f) return vec;
-		Vector3 result = {vec.x/mag,vec.y/mag,vec.z/mag};
-		return result;
-	}
-	float magVector3(Vector3 vec) { // normalize
-		float result = sqrtf((vec.x*vec.x)+(vec.y*vec.y)+(vec.z*vec.z));
-		return result;
-	}
-
 
 	char debugText[12][50] = {0};
 	while(!WindowShouldClose()) {
@@ -120,7 +87,7 @@ int main(int argc, char** argv) {
 				spells[i].pos.x>=100.0f || // out of bounds x
 				spells[i].pos.y>=100.0f || // out of bounds y
 				spells[i].pos.z>=100.0f || // out of bounds z
-				spells[i].len > 75.0f)
+				spells[i].len > 100.0f)
 			) {
 
 
@@ -131,6 +98,8 @@ int main(int argc, char** argv) {
 
 			if(i != curSpell || !spellActive) {
 				spells[i].pos = camera.position;
+				spells[i].pos.y = -1;
+				spells[i].init = spells[i].pos;
 			}
 		}
 
