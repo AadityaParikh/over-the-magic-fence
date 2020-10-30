@@ -10,6 +10,8 @@ typedef struct Spell {
 	Vector3 sum;
 	float speed;
 	Texture2D sprites[5];
+	char* name;
+	int coolDown;
 } Spell;
 
 int main(int argc, char** argv) {
@@ -43,18 +45,25 @@ int main(int argc, char** argv) {
 	Spell spells[1];
 	int numSpells = (sizeof(spells)/sizeof(spells[0]));
 
+	spells[0].name = "fireball";
 	spells[0].speed = 0.5f;
+	spells[0].coolDown = 60; // 1 sec
+
+
 	for(int j = 0;j<numSpells;j++) {
 		for(int i = 0;i<4;i++) {
 			char intStr[2];
 			sprintf(intStr,"%d",i);
-			char filename[]= "Art/Sprites/fireball/sprite_";
+			char filename[]= "Art/Sprites/";
+			strcat(filename,spells[j].name);
+			strcat(filename,"/sprite_");
 			strcat(filename,intStr);
 			strcat(filename,".png");
 			spells[j].sprites[i] = LoadTexture(filename);
 		}
 	}
 
+	// raymath can't get linked for some systems for some reason
 	Vector3 addVector3(Vector3 v1,Vector3 v2) { // add
 		Vector3 result = { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
 		return result;
@@ -75,11 +84,14 @@ int main(int argc, char** argv) {
 	}
 
 
-
+	char currentSpellName[50];
+	char cooldownText[50];
+	char intStrCooldown[50];
 	while(!WindowShouldClose()) {
 
 		UpdateCamera(&camera);
 		frame++;
+		if(spellCooldown > 0) spellCooldown--;
 
 		screenDir = subVector3(camera.target,camera.position);
 		screenDir = normVector3(screenDir);
@@ -89,28 +101,43 @@ int main(int argc, char** argv) {
 			spells[0].dir = screenDir;
 
 			spells[0].pos.y = 0.5f;
+
+			spellCooldown =  spells[curSpell].coolDown;
 		}
 
-		spells[0].pos = addVector3(spells[0].pos,scaleVector3(spells[0].dir,spells[0].speed)); // TODO make it not hardcoded
-		spells[0].sum = addVector3(spells[0].dir,spells[0].pos);
+		for(int i = 0;i<numSpells;i++) {
+			spells[i].pos = addVector3(spells[i].pos,scaleVector3(spells[i].dir,spells[i].speed));
+			spells[i].sum = addVector3(spells[i].dir,spells[i].pos);
+		}
 
 
+		strcpy(currentSpellName,"Spell Active : ");
+		strcat(currentSpellName,spells[curSpell].name);
+
+		strcpy(cooldownText,"Cooldown : ");
+		sprintf(intStrCooldown,"%d",spellCooldown);
+		strcat(cooldownText,intStrCooldown);
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
 
 			BeginMode3D(camera);
 
+
 				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
 				DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
+
 
 				DrawBillboard(camera,spells[0].sprites[(frame/10)%4],spells[0].sum,1.0f,WHITE);
 				
 
 			EndMode3D();
 
+			DrawFPS(10,10);
+			DrawText(currentSpellName,10,30,20,LIME);
+			DrawText(cooldownText,10,50,20,LIME);
 
 		EndDrawing();
 	}
