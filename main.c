@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "spell.h"
+#include "person.h"
 
 int main(int argc, char** argv) {
 	int screenWidth = GetMonitorWidth(0);
@@ -30,90 +31,90 @@ int main(int argc, char** argv) {
 	
 	float temp = 0.0f;
 	int frame = 0;
-	int spellCooldown = 0;
-	int curSpell = 0;
-	bool spellActive = 0;
 
-	Spell spells[1] = {0};
-	int numSpells = (sizeof(spells)/sizeof(spells[0]));
+	Person people[10];
 
-	spells[0].name = "fireball";
-	spells[0].speed = 0.5f;
-	spells[0].coolDown = 60; // 1 sec
+	people[0].spells[0].name = "fireball";
+	people[0].spells[0].speed = 0.5f;
+	people[0].spells[0].coolDown = 60; // 1 sec
 
 
-	for(int j = 0;j<numSpells;j++) {
+	for(int j = 0;j<people[0].numSpells;j++) { // loading sprite textures
 		for(int i = 0;i<4;i++) {
 			char intStr[2];
 			sprintf(intStr,"%d",i);
 			char filename[]= "Art/Sprites/";
-			strcat(filename,spells[j].name);
+			strcat(filename,people[0].spells[j].name);
 			strcat(filename,"/sprite_");
 			strcat(filename,intStr);
 			strcat(filename,".png");
-			spells[j].sprites[i] = LoadTexture(filename);
+			people[0].spells[j].sprites[i] = LoadTexture(filename);
 		}
 	}
 
-	// raymath can't get linked for some systems for some reason
+	Texture2D enemy = LoadTexture("Art/Sprites/Player movement/Movement frames/Movement 1/sprite_0.png");
 
-	char debugText[12][50] = {0};
+
+	char debugText[15][50] = {0};
 	while(!WindowShouldClose()) {
 
 		UpdateCamera(&camera);
 		frame++;
-		if(spellCooldown > 0) spellCooldown--;
+		people[0].position = camera.position; // player specific
+		people[0].target = camera.target;
 
-		screenDir = subVector3(camera.target,camera.position);
+		if(people[0].spellCooldown > 0) people[0].spellCooldown--;
+
+		screenDir = subVector3(people[0].target,people[0].position);
 		screenDir = normVector3(screenDir);
+		people[0].direction = screenDir;
 
-		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&spellCooldown==0&&spellActive==0) {
-			spells[0].pos = camera.position;
-			spells[0].init = camera.position;
-			spells[0].dir = screenDir;
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&people[0].spellCooldown==0&&people[0].spellActive==0) { // spell init
+			people[0].spells[0].pos = people[0].position;
+			people[0].spells[0].init = people[0].position;
+			people[0].spells[0].dir = screenDir;
 
-			spells[0].pos.y = 0.5f;
-
-			spellCooldown =  spells[curSpell].coolDown;
-			spellActive = 1;
+			people[0].spellCooldown =  people[0].spells[people[0].curSpell].coolDown;
+			people[0].spellActive = 1;
 		}
 
-		for(int i = 0;i<numSpells;i++) {
-			spells[i].pos = addVector3(spells[i].pos,scaleVector3(spells[i].dir,spells[i].speed));
-			spells[i].len = magVector3(subVector3(spells[i].pos,spells[i].init));
+		for(int i = 0;i<people[0].numSpells;i++) { // spell updating
+			people[0].spells[i].pos = addVector3(people[0].spells[i].pos,scaleVector3(people[0].spells[i].dir,people[0].spells[i].speed));
+			people[0].spells[i].len = magVector3(subVector3(people[0].spells[i].pos,people[0].spells[i].init));
 
-			if(	(i == curSpell && spellActive) &&
-				(spells[i].pos.y<=0.1f || // under the ground
-				spells[i].pos.x>=100.0f || // out of bounds x
-				spells[i].pos.y>=100.0f || // out of bounds y
-				spells[i].pos.z>=100.0f || // out of bounds z
-				spells[i].len > 100.0f)
-			) {
+			if(	(i == people[0].curSpell && people[0].spellActive) ||
+				(people[0].spells[i].pos.y<=0.1f || // under the ground
+				people[0].spells[i].pos.x>=100.0f || // out of bounds x
+				people[0].spells[i].pos.y>=100.0f || // out of bounds y
+				people[0].spells[i].pos.z>=100.0f || // out of bounds z
+				people[0].spells[i].len > 50.0f)) { // too far away from spells' init
 
-
-				spells[i].dir = zeroV3;
-				spells[i].pos = (Vector3){0,1,0};
-				spellActive = 0;
+					people[0].spells[i].dir = zeroV3;
+					people[0].spells[i].pos = (Vector3){0,1,0};
+					people[0].spellActive = 0;
 			}
 
-			if(i != curSpell || !spellActive) {
-				spells[i].pos = camera.position;
-				spells[i].pos.y = -1;
-				spells[i].init = spells[i].pos;
+			if(i != people[0].curSpell || !people[0].spellActive) {
+				people[0].spells[i].pos = people[0].position;
+				people[0].spells[i].pos.y = -1;
+				people[0].spells[i].init = people[0].spells[i].pos;
 			}
 		}
 
 		sprintf(debugText[0],"%s : %d","FPS",GetFPS());
-		sprintf(debugText[1],"%s : %s","Spell Active",spellActive?"Yes":"No");
-		sprintf(debugText[2],"%s : %d","Cooldown",spellCooldown);
+		sprintf(debugText[1],"%s : %s","Spell Active",people[0].spellActive?"Yes":"No");
+		sprintf(debugText[2],"%s : %d","Cooldown",people[0].spellCooldown);
+		sprintf(debugText[3],"%s : %f,%f,%f","Pos",people[0].position.x,people[0].position.y,people[0].position.z);
+		sprintf(debugText[4],"%s : %f,%f,%f","Dir",people[0].direction.x,people[0].direction.y,people[0].direction.z);
 
-		sprintf(debugText[3],"%s : ","Current Spell Info");
-		sprintf(debugText[4],"\t%s : %s","Name",spells[curSpell].name);
-		sprintf(debugText[5],"\t%s : %f,%f,%f","Pos",spells[curSpell].pos.x,spells[curSpell].pos.y,spells[curSpell].pos.z);
-		sprintf(debugText[6],"\t%s : %f,%f,%f","Dir",spells[curSpell].dir.x,spells[curSpell].dir.y,spells[curSpell].dir.z);
-		sprintf(debugText[7],"\t%s : %d","MaxCooldown",spells[curSpell].coolDown);
-		sprintf(debugText[8],"\t%s : %f","Speed",spells[curSpell].speed);
-		sprintf(debugText[9],"\t%s : %f","Distance",spells[curSpell].len);
+		sprintf(debugText[5],"%s : %d","Current Spell Info",people[0].curSpell);
+		sprintf(debugText[6],"\t%s : %s","Name",people[0].spells[people[0].curSpell].name);
+		sprintf(debugText[7],"\t%s : %f,%f,%f","Pos",people[0].spells[people[0].curSpell].pos.x,people[0].spells[people[0].curSpell].pos.y,people[0].spells[people[0].curSpell].pos.z);
+		sprintf(debugText[8],"\t%s : %f,%f,%f","Dir",people[0].spells[people[0].curSpell].dir.x,people[0].spells[people[0].curSpell].dir.y,people[0].spells[people[0].curSpell].dir.z);
+		sprintf(debugText[9],"\t%s : %f,%f,%f","Init",people[0].spells[people[0].curSpell].init.x,people[0].spells[people[0].curSpell].init.y,people[0].spells[people[0].curSpell].init.z);
+		sprintf(debugText[10],"\t%s : %d","MaxCooldown",people[0].spells[people[0].curSpell].coolDown);
+		sprintf(debugText[11],"\t%s : %f","Speed",people[0].spells[people[0].curSpell].speed);
+		sprintf(debugText[12],"\t%s : %f","Distance",people[0].spells[people[0].curSpell].len);
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
@@ -126,7 +127,9 @@ int main(int argc, char** argv) {
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
 				
-				DrawBillboard(camera,spells[0].sprites[(frame/10)%4],spells[0].pos,1.0f,WHITE);
+				DrawBillboard(camera,enemy,(Vector3){0,1,0},1.0f,WHITE);
+
+				DrawBillboard(camera,people[0].spells[0].sprites[(frame/10)%4],people[0].spells[0].pos,1.0f,WHITE);
 				
 				
 			EndMode3D();
