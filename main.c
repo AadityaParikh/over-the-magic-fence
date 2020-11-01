@@ -23,6 +23,7 @@ int main(int argc, char** argv) {
 	SetCameraMode(camera, CAMERA_FIRST_PERSON);
 
 	Model ring = LoadModel("Art/Models/ring.obj");
+	Mesh ringMesh = LoadModel("Art/Models/ring.obj");
 
 	Vector3 zeroV3 = {0.0f,0.0f,0.0f};
 	Vector3 screenDir = zeroV3; // normalized vector of direction screen is pointing in
@@ -37,17 +38,13 @@ int main(int argc, char** argv) {
 	people[0].spells[0].name = "fireball";
 	people[0].spells[0].speed = 0.5f;
 	people[0].spells[0].coolDown = 60; // 1 sec
+	people[0].numSpells = 15;
 
 
 	for(int j = 0;j<people[0].numSpells;j++) { // loading sprite textures
 		for(int i = 0;i<4;i++) {
-			char intStr[2];
-			sprintf(intStr,"%d",i);
-			char filename[]= "Art/Sprites/";
-			strcat(filename,people[0].spells[j].name);
-			strcat(filename,"/sprite_");
-			strcat(filename,intStr);
-			strcat(filename,".png");
+			char filename[100];
+			sprintf(filename,"Art/Sprites/%s/sprite_%d.png",people[0].spells[j].name,i);
 			people[0].spells[j].sprites[i] = LoadTexture(filename);
 		}
 	}
@@ -82,7 +79,7 @@ int main(int argc, char** argv) {
 			people[0].spells[i].pos = addVector3(people[0].spells[i].pos,scaleVector3(people[0].spells[i].dir,people[0].spells[i].speed));
 			people[0].spells[i].len = magVector3(subVector3(people[0].spells[i].pos,people[0].spells[i].init));
 
-			if(	(i == people[0].curSpell && people[0].spellActive) ||
+			if(	(i == people[0].curSpell && people[0].spellActive) &&
 				(people[0].spells[i].pos.y<=0.1f || // under the ground
 				people[0].spells[i].pos.x>=100.0f || // out of bounds x
 				people[0].spells[i].pos.y>=100.0f || // out of bounds y
@@ -128,8 +125,10 @@ int main(int argc, char** argv) {
 				DrawGizmo(zeroV3);
 				
 				DrawBillboard(camera,enemy,(Vector3){0,1,0},1.0f,WHITE);
+				DrawBillboard(camera,enemy,(Vector3){1,1,1},1.0f,WHITE);
 
 				DrawBillboard(camera,people[0].spells[0].sprites[(frame/10)%4],people[0].spells[0].pos,1.0f,WHITE);
+
 				
 				
 			EndMode3D();
