@@ -5,6 +5,7 @@
 #include <raylib.h>
 
 typedef struct Person {
+	char name[50];
 	int spellCooldown;
 	int curSpell;
 	bool spellActive;
@@ -13,7 +14,8 @@ typedef struct Person {
 	Vector3 position;
 	Vector3 direction;
 	Vector3 target;
-	Texture2D sprites;
+	Vector3 momentum;
+	Texture2D sprites[6];
 } Person;
 
 #endif
