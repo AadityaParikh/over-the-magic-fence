@@ -9,9 +9,7 @@
 int main(int argc, char** argv) {
 	int screenWidth = GetMonitorWidth(0);
 	int screenHeight = GetMonitorHeight(0);
-
 	InitWindow(screenWidth,screenHeight,"Over The Magic Fence");
-
 	SetTargetFPS(60);
 
 	Camera3D camera = { 0 };
@@ -23,33 +21,34 @@ int main(int argc, char** argv) {
 	SetCameraMode(camera, CAMERA_FIRST_PERSON);
 
 	Model ring = LoadModel("Art/Models/ring.obj");
-	Mesh ringMesh = LoadModel("Art/Models/ring.obj");
 
 	Vector3 zeroV3 = {0.0f,0.0f,0.0f};
-	Vector3 screenDir = zeroV3; // normalized vector of direction screen is pointing in
+	Vector3 screenDir; // normalized vector of direction screen is pointing in
 
-	Ray mouse = {0};
-	
 	float temp = 0.0f;
 	int frame = 0;
 
-	Person people[10];
+	Person people[10] = {0};
+	int numPeople = 10; // for ease of use
+	Person sortedPeople[numPeople-1]; // player not included
 
 	people[0].spells[0].name = "fireball";
 	people[0].spells[0].speed = 0.5f;
 	people[0].spells[0].coolDown = 60; // 1 sec
 	people[0].numSpells = 15;
+	people[0].position.y = 1;
 
 
-	for(int j = 0;j<people[0].numSpells;j++) { // loading sprite textures
-		for(int i = 0;i<4;i++) {
+	for(int i = 0;i<people[0].numSpells;i++) { // loading sprite textures
+		for(int j = 0;j<4;j++) {
 			char filename[100];
-			sprintf(filename,"Art/Sprites/%s/sprite_%d.png",people[0].spells[j].name,i);
-			people[0].spells[j].sprites[i] = LoadTexture(filename);
+			sprintf(filename,"Art/Sprites/spells/%s/sprite_%d.png",people[0].spells[i].name,j);
+			people[0].spells[i].sprites[j] = LoadTexture(filename);
 		}
 	}
 
-	Texture2D enemy = LoadTexture("Art/Sprites/Player movement/Movement frames/Movement 1/sprite_0.png");
+	people[1].sprites[0] = LoadTexture("Art/Sprites/Player movement/Movement frames/Movement 1/sprite_0.png");
+	people[2].sprites[0] = LoadTexture("Art/Sprites/Player movement/Movement frames/Movement 1/sprite_0.png");
 
 
 	char debugText[15][50] = {0};
@@ -57,13 +56,13 @@ int main(int argc, char** argv) {
 
 		UpdateCamera(&camera);
 		frame++;
-		people[0].position = camera.position; // player specific
-		people[0].target = camera.target;
-
-		if(people[0].spellCooldown > 0) people[0].spellCooldown--;
-
 		screenDir = subVector3(people[0].target,people[0].position);
 		screenDir = normVector3(screenDir);
+
+		people[0].position.x = camera.position.x; // player specific
+		camera.position.y = people[0].position.y;
+		people[0].position.z = camera.position.z;
+		people[0].target = camera.target;
 		people[0].direction = screenDir;
 
 		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&people[0].spellCooldown==0&&people[0].spellActive==0) { // spell init
@@ -73,29 +72,39 @@ int main(int argc, char** argv) {
 
 			people[0].spellCooldown =  people[0].spells[people[0].curSpell].coolDown;
 			people[0].spellActive = 1;
+		} // only done for player cause only player can click
+		if(IsKeyPressed(KEY_SPACE)) {
+			people[0].momentum = (Vector3){0,1,0};
 		}
 
-		for(int i = 0;i<people[0].numSpells;i++) { // spell updating
-			people[0].spells[i].pos = addVector3(people[0].spells[i].pos,scaleVector3(people[0].spells[i].dir,people[0].spells[i].speed));
-			people[0].spells[i].len = magVector3(subVector3(people[0].spells[i].pos,people[0].spells[i].init));
+		for(int j = 0;j<numPeople;j++) {
+			for(int i = 0;i<people[j].numSpells;i++) { // spell updating
+				people[j].spells[i].pos = addVector3(people[j].spells[i].pos,scaleVector3(people[j].spells[i].dir,people[j].spells[i].speed));
+				people[j].spells[i].len = magVector3(subVector3(people[j].spells[i].pos,people[j].spells[i].init));
 
-			if(	(i == people[0].curSpell && people[0].spellActive) &&
-				(people[0].spells[i].pos.y<=0.1f || // under the ground
-				people[0].spells[i].pos.x>=100.0f || // out of bounds x
-				people[0].spells[i].pos.y>=100.0f || // out of bounds y
-				people[0].spells[i].pos.z>=100.0f || // out of bounds z
-				people[0].spells[i].len > 50.0f)) { // too far away from spells' init
+				if(	(i == people[j].curSpell && people[j].spellActive) &&
+					(people[j].spells[i].pos.y<=0.1f || // under the ground
+					people[j].spells[i].pos.x>=100.0f || // out of bounds x
+					people[j].spells[i].pos.y>=100.0f || // out of bounds y
+					people[j].spells[i].pos.z>=100.0f || // out of bounds z
+					people[j].spells[i].len > 50.0f)) { // too far away from spells' init
 
-					people[0].spells[i].dir = zeroV3;
-					people[0].spells[i].pos = (Vector3){0,1,0};
-					people[0].spellActive = 0;
+						people[j].spells[i].dir = zeroV3;
+						people[j].spells[i].pos = (Vector3){0,1,0};
+						people[j].spellActive = 0;
+				}
+
+				if(i != people[j].curSpell || !people[j].spellActive) {
+					people[j].spells[i].pos = people[j].position;
+					people[j].spells[i].pos.y = -1;
+					people[j].spells[i].init = people[j].spells[i].pos;
+				}
 			}
 
-			if(i != people[0].curSpell || !people[0].spellActive) {
-				people[0].spells[i].pos = people[0].position;
-				people[0].spells[i].pos.y = -1;
-				people[0].spells[i].init = people[0].spells[i].pos;
-			}
+			if(people[j].spellCooldown > 0) people[j].spellCooldown--;
+			
+			people[j].position = addVector3(people[0].position,people[0].momentum);
+			people[j].momentum = scaleVector3(people[j].momentum,0.5f);
 		}
 
 		sprintf(debugText[0],"%s : %d","FPS",GetFPS());
@@ -118,14 +127,14 @@ int main(int argc, char** argv) {
 
 			BeginMode3D(camera);
 				
-				
-				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},DARKGREEN);
+				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},(Color){0,117,44,230});
 				DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
 				
-				DrawBillboard(camera,enemy,(Vector3){0,1,0},1.0f,WHITE);
-				DrawBillboard(camera,enemy,(Vector3){1,1,1},1.0f,WHITE);
+
+				DrawBillboard(camera,people[1].sprites[0],people[1].position,1.0f,WHITE);
+				DrawBillboard(camera,people[2].sprites[0],people[2].position,1.0f,WHITE);
 
 				DrawBillboard(camera,people[0].spells[0].sprites[(frame/10)%4],people[0].spells[0].pos,1.0f,WHITE);
 
