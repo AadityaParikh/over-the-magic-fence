@@ -6,6 +6,8 @@
 #include "spell.h"
 #include "person.h"
 
+#define PLAYER 0
+
 int main(int argc, char** argv) {
 	int screenWidth = GetMonitorWidth(0);
 	int screenHeight = GetMonitorHeight(0);
@@ -29,26 +31,31 @@ int main(int argc, char** argv) {
 	int frame = 0;
 
 	Person people[10] = {0};
-	int numPeople = 10; // for ease of use
-	Person sortedPeople[numPeople-1]; // player not included
+	int numPeople = (sizeof(people)/sizeof(people[0])); // for ease of use
+	Person sortedPeople[numPeople]; // player not included
 
-	people[0].spells[0].name = "fireball";
-	people[0].spells[0].speed = 0.5f;
-	people[0].spells[0].coolDown = 60; // 1 sec
-	people[0].numSpells = 15;
-	people[0].position.y = 1;
+	people[PLAYER].spells[0].name = "fireball";
+	people[PLAYER].spells[0].speed = 0.5f;
+	people[PLAYER].spells[0].coolDown = 60; // 1 sec
+	people[PLAYER].numSpells = 1;
+	people[PLAYER].position.y = 1;
 
 
-	for(int i = 0;i<people[0].numSpells;i++) { // loading sprite textures
+	for(int i = 0;i<people[PLAYER].numSpells;i++) { // loading sprite textures
 		for(int j = 0;j<4;j++) {
 			char filename[100];
-			sprintf(filename,"Art/Sprites/spells/%s/sprite_%d.png",people[0].spells[i].name,j);
-			people[0].spells[i].sprites[j] = LoadTexture(filename);
+			sprintf(filename,"Art/Sprites/spells/%s/sprite_%d.png",people[PLAYER].spells[i].name,j);
+			people[PLAYER].spells[i].sprites[j] = LoadTexture(filename);
 		}
 	}
 
 	people[1].sprites[0] = LoadTexture("Art/Sprites/Player movement/Movement frames/Movement 1/sprite_0.png");
+	people[1].position.y = 1;
+	people[1].position.x = 1;
+	people[1].momentum = (Vector3){0};
 	people[2].sprites[0] = LoadTexture("Art/Sprites/Player movement/Movement frames/Movement 1/sprite_0.png");
+	people[2].position.y = 1;
+	people[2].momentum = (Vector3){0};
 
 
 	char debugText[15][50] = {0};
@@ -56,26 +63,23 @@ int main(int argc, char** argv) {
 
 		UpdateCamera(&camera);
 		frame++;
-		screenDir = subVector3(people[0].target,people[0].position);
+		screenDir = subVector3(people[PLAYER].target,people[PLAYER].position);
 		screenDir = normVector3(screenDir);
 
-		people[0].position.x = camera.position.x; // player specific
-		camera.position.y = people[0].position.y;
-		people[0].position.z = camera.position.z;
-		people[0].target = camera.target;
-		people[0].direction = screenDir;
+		people[PLAYER].position.x = camera.position.x; // player specific
+		camera.position.y = people[PLAYER].position.y;
+		people[PLAYER].position.z = camera.position.z;
+		people[PLAYER].target = camera.target;
+		people[PLAYER].direction = screenDir;
 
-		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&people[0].spellCooldown==0&&people[0].spellActive==0) { // spell init
-			people[0].spells[0].pos = people[0].position;
-			people[0].spells[0].init = people[0].position;
-			people[0].spells[0].dir = screenDir;
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&people[PLAYER].spellCooldown==0&&people[PLAYER].spellActive==0) { // spell init
+			people[PLAYER].spells[0].pos = people[PLAYER].position;
+			people[PLAYER].spells[0].init = people[PLAYER].position;
+			people[PLAYER].spells[0].dir = screenDir;
 
-			people[0].spellCooldown =  people[0].spells[people[0].curSpell].coolDown;
-			people[0].spellActive = 1;
+			people[PLAYER].spellCooldown =  people[PLAYER].spells[people[PLAYER].curSpell].coolDown;
+			people[PLAYER].spellActive = 1;
 		} // only done for player cause only player can click
-		if(IsKeyPressed(KEY_SPACE)) {
-			people[0].momentum = (Vector3){0,1,0};
-		}
 
 		for(int j = 0;j<numPeople;j++) {
 			for(int i = 0;i<people[j].numSpells;i++) { // spell updating
@@ -103,24 +107,22 @@ int main(int argc, char** argv) {
 
 			if(people[j].spellCooldown > 0) people[j].spellCooldown--;
 			
-			people[j].position = addVector3(people[0].position,people[0].momentum);
-			people[j].momentum = scaleVector3(people[j].momentum,0.5f);
 		}
 
 		sprintf(debugText[0],"%s : %d","FPS",GetFPS());
-		sprintf(debugText[1],"%s : %s","Spell Active",people[0].spellActive?"Yes":"No");
-		sprintf(debugText[2],"%s : %d","Cooldown",people[0].spellCooldown);
-		sprintf(debugText[3],"%s : %f,%f,%f","Pos",people[0].position.x,people[0].position.y,people[0].position.z);
-		sprintf(debugText[4],"%s : %f,%f,%f","Dir",people[0].direction.x,people[0].direction.y,people[0].direction.z);
+		sprintf(debugText[1],"%s : %s","Spell Active",people[PLAYER].spellActive?"Yes":"No");
+		sprintf(debugText[2],"%s : %d","Cooldown",people[PLAYER].spellCooldown);
+		sprintf(debugText[3],"%s : %f,%f,%f","Pos",people[PLAYER].position.x,people[PLAYER].position.y,people[PLAYER].position.z);
+		sprintf(debugText[4],"%s : %f,%f,%f","Dir",people[PLAYER].direction.x,people[PLAYER].direction.y,people[PLAYER].direction.z);
 
-		sprintf(debugText[5],"%s : %d","Current Spell Info",people[0].curSpell);
-		sprintf(debugText[6],"\t%s : %s","Name",people[0].spells[people[0].curSpell].name);
-		sprintf(debugText[7],"\t%s : %f,%f,%f","Pos",people[0].spells[people[0].curSpell].pos.x,people[0].spells[people[0].curSpell].pos.y,people[0].spells[people[0].curSpell].pos.z);
-		sprintf(debugText[8],"\t%s : %f,%f,%f","Dir",people[0].spells[people[0].curSpell].dir.x,people[0].spells[people[0].curSpell].dir.y,people[0].spells[people[0].curSpell].dir.z);
-		sprintf(debugText[9],"\t%s : %f,%f,%f","Init",people[0].spells[people[0].curSpell].init.x,people[0].spells[people[0].curSpell].init.y,people[0].spells[people[0].curSpell].init.z);
-		sprintf(debugText[10],"\t%s : %d","MaxCooldown",people[0].spells[people[0].curSpell].coolDown);
-		sprintf(debugText[11],"\t%s : %f","Speed",people[0].spells[people[0].curSpell].speed);
-		sprintf(debugText[12],"\t%s : %f","Distance",people[0].spells[people[0].curSpell].len);
+		sprintf(debugText[5],"%s : %d","Current Spell Info",people[PLAYER].curSpell);
+		sprintf(debugText[6],"\t%s : %s","Name",people[PLAYER].spells[people[PLAYER].curSpell].name);
+		sprintf(debugText[7],"\t%s : %f,%f,%f","Pos",people[PLAYER].spells[people[PLAYER].curSpell].pos.x,people[PLAYER].spells[people[PLAYER].curSpell].pos.y,people[PLAYER].spells[people[PLAYER].curSpell].pos.z);
+		sprintf(debugText[8],"\t%s : %f,%f,%f","Dir",people[PLAYER].spells[people[PLAYER].curSpell].dir.x,people[PLAYER].spells[people[PLAYER].curSpell].dir.y,people[PLAYER].spells[people[PLAYER].curSpell].dir.z);
+		sprintf(debugText[9],"\t%s : %f,%f,%f","Init",people[PLAYER].spells[people[PLAYER].curSpell].init.x,people[PLAYER].spells[people[PLAYER].curSpell].init.y,people[PLAYER].spells[people[PLAYER].curSpell].init.z);
+		sprintf(debugText[10],"\t%s : %d","MaxCooldown",people[PLAYER].spells[people[PLAYER].curSpell].coolDown);
+		sprintf(debugText[11],"\t%s : %f","Speed",people[PLAYER].spells[people[PLAYER].curSpell].speed);
+		sprintf(debugText[12],"\t%s : %f","Distance",people[PLAYER].spells[people[PLAYER].curSpell].len);
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
@@ -132,11 +134,11 @@ int main(int argc, char** argv) {
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
 				
+				DrawBillboard(camera,people[PLAYER].spells[0].sprites[(frame/10)%4],people[PLAYER].spells[0].pos,1.0f,WHITE);
 
 				DrawBillboard(camera,people[1].sprites[0],people[1].position,1.0f,WHITE);
 				DrawBillboard(camera,people[2].sprites[0],people[2].position,1.0f,WHITE);
 
-				DrawBillboard(camera,people[0].spells[0].sprites[(frame/10)%4],people[0].spells[0].pos,1.0f,WHITE);
 
 				
 				
