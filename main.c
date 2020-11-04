@@ -5,6 +5,8 @@
 
 #include "spell.h"
 #include "person.h"
+#include "func.h"
+
 
 #define PLAYER 0
 
@@ -14,13 +16,15 @@ int main(int argc, char** argv) {
 	InitWindow(screenWidth,screenHeight,"Over The Magic Fence");
 	SetTargetFPS(60);
 
-	Camera3D camera = { 0 };
+	Camera3D camera = {0}; 
     camera.position = (Vector3){ 1.0f, 1.0f, 0.0f };
     camera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
     camera.up = (Vector3){ 0.0f, 1.0f, 0.0f }; 
-    camera.fovy = 45.0f;
+    camera.fovy = 90.0f;
     camera.type = CAMERA_PERSPECTIVE;
-	SetCameraMode(camera, CAMERA_FIRST_PERSON);
+	SetCameraMode(camera,CAMERA_FIRST_PERSON);
+
+	Camera3D rendered = camera; // actual camera that will be rendered
 
 	Model ring = LoadModel("Art/Models/ring.obj");
 
@@ -38,7 +42,10 @@ int main(int argc, char** argv) {
 	people[PLAYER].spells[0].speed = 0.5f;
 	people[PLAYER].spells[0].coolDown = 60; // 1 sec
 	people[PLAYER].numSpells = 1;
-	people[PLAYER].position.y = 1;
+	camera.position.y = 1; // EDIT THE CAMERA NOT PLAYER POSITION DONT BE A DUMBASS LIKE ME
+	// player pos is for math use only
+	
+	Vector3 inter = camera.position; // intermediary between camera
 
 
 	for(int i = 0;i<people[PLAYER].numSpells;i++) { // loading sprite textures
@@ -58,18 +65,21 @@ int main(int argc, char** argv) {
 	people[2].momentum = (Vector3){0};
 
 
-	char debugText[15][50] = {0};
+	screenWidth = GetMonitorWidth(0);
+	screenHeight = GetMonitorHeight(0);
+	char debugText[20][50] = {0};
 	while(!WindowShouldClose()) {
 
+
 		UpdateCamera(&camera);
+		rendered.position = addVector3(scaleVector3(camera.position,0.2),scaleVector3(rendered.position,0.8));
+		rendered.target = addVector3(scaleVector3(camera.target,0.2),scaleVector3(rendered.target,0.8));
 		frame++;
+
+		people[PLAYER].position = camera.position;
+		people[PLAYER].target = camera.target;
 		screenDir = subVector3(people[PLAYER].target,people[PLAYER].position);
 		screenDir = normVector3(screenDir);
-
-		people[PLAYER].position.x = camera.position.x; // player specific
-		camera.position.y = people[PLAYER].position.y;
-		people[PLAYER].position.z = camera.position.z;
-		people[PLAYER].target = camera.target;
 		people[PLAYER].direction = screenDir;
 
 		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&people[PLAYER].spellCooldown==0&&people[PLAYER].spellActive==0) { // spell init
@@ -79,7 +89,17 @@ int main(int argc, char** argv) {
 
 			people[PLAYER].spellCooldown =  people[PLAYER].spells[people[PLAYER].curSpell].coolDown;
 			people[PLAYER].spellActive = 1;
-		} // only done for player cause only player can click
+		} 
+		switch(GetKeyPressed()) {
+			case KEY_SPACE :
+				camera.position.x += people[PLAYER].direction.x*5;
+				camera.position.z += people[PLAYER].direction.z*5;
+				break;
+			case KEY_W :
+				
+			default :
+				break;
+		}
 
 		for(int j = 0;j<numPeople;j++) {
 			for(int i = 0;i<people[j].numSpells;i++) { // spell updating
@@ -123,21 +143,22 @@ int main(int argc, char** argv) {
 		sprintf(debugText[10],"\t%s : %d","MaxCooldown",people[PLAYER].spells[people[PLAYER].curSpell].coolDown);
 		sprintf(debugText[11],"\t%s : %f","Speed",people[PLAYER].spells[people[PLAYER].curSpell].speed);
 		sprintf(debugText[12],"\t%s : %f","Distance",people[PLAYER].spells[people[PLAYER].curSpell].len);
+		sprintf(debugText[13],"%s : %d","Key Pressed",GetKeyPressed());
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
 
-			BeginMode3D(camera);
+			BeginMode3D(rendered);
 				
 				DrawPlane((Vector3){0.0f,-0.0001f,0.0f},(Vector2){100.0f,100.0f},(Color){0,117,44,230});
 				DrawModel(ring,(Vector3){0.0f,0.0f,0.0f},1.0f,GRAY);
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
 				
-				DrawBillboard(camera,people[PLAYER].spells[0].sprites[(frame/10)%4],people[PLAYER].spells[0].pos,1.0f,WHITE);
+				DrawBillboard(rendered,people[PLAYER].spells[0].sprites[(frame/10)%4],people[PLAYER].spells[0].pos,1.0f,WHITE);
 
-				DrawBillboard(camera,people[1].sprites[0],people[1].position,1.0f,WHITE);
-				DrawBillboard(camera,people[2].sprites[0],people[2].position,1.0f,WHITE);
+				DrawBillboard(rendered,people[1].sprites[0],people[1].position,1.0f,WHITE);
+				DrawBillboard(rendered,people[2].sprites[0],people[2].position,1.0f,WHITE);
 
 
 				
