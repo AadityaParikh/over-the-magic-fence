@@ -1,8 +1,16 @@
 #ifndef PERSON_H
 #define PERSON_H
 
-#include "spell.h"
 #include <raylib.h>
+
+#define DIR_NORTH	0;
+#define DIR_NEAST	1;
+#define DIR_EAST	2;
+#define DIR_SEAST	3;
+#define DIR_SOUTH	4;
+#define DIR_SWEST	5;
+#define DIR_WEST	6;
+#define DIR_NWEST	7;
 
 typedef struct Person {
 	char name[50];
@@ -18,15 +26,6 @@ typedef struct Person {
 	Texture2D sprites[6];
 } Person;
 
-typedef enum {
-	DIR_NORTH	= 0;
-	DIR_NEAST	= 1;
-	DIR_EAST	= 2;
-	DIR_SEAST	= 3;
-	DIR_SOUTH	= 4;
-	DIR_SWEST	= 5;
-	DIR_WEST	= 6;
-	DIR_NWEST	= 7;
-}
+
 
 #endif
