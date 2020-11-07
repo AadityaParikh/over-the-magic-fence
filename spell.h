@@ -7,7 +7,8 @@ typedef struct Spell {
     Vector3 dir;
     Vector3 init;
     float speed;
-    Texture2D sprites[5];
+    Texture2D spriteSheet;
+	int curSprite;
     char* name;
     int coolDown;
     float len;

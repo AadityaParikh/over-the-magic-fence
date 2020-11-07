@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
 
 	Person people[10] = {0};
 	int numPeople = (sizeof(people)/sizeof(people[0])); // for ease of use
-	Person sortedPeople[numPeople]; // player not included
+	Person sortedPeople[numPeople]; 
 
 	people[PLAYER].spells[0].name = "fireball";
 	people[PLAYER].spells[0].speed = 0.5f;
@@ -54,11 +54,9 @@ int main(int argc, char** argv) {
 
 
 	for(int i = 0;i<people[PLAYER].numSpells;i++) { // loading sprite textures
-		for(int j = 0;j<4;j++) {
 			char filename[100];
-			sprintf(filename,"Art/Sprites/spells/%s/sprite_%d.png",people[PLAYER].spells[i].name,j);
-			people[PLAYER].spells[i].sprites[j] = LoadTexture(filename);
-		}
+			sprintf(filename,"Art/Sprites/spells/%s/spriteSheet.png",people[PLAYER].spells[i].name);
+			people[PLAYER].spells[i].spriteSheet = LoadTexture(filename);
 	}
 
 	people[1].spriteSheet = LoadTexture("Art/Sprites/people/betty/spritesheet.png");
@@ -94,6 +92,10 @@ int main(int argc, char** argv) {
 		dodgeDir.x = people[PLAYER].direction.x;
 		dodgeDir.y = people[PLAYER].direction.z;
 
+		for(int i = 0;i<numPeople;i++) { // sorting people
+			
+		}
+
 		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&people[PLAYER].spellCooldown==0&&people[PLAYER].spellActive==0) { // spell init
 			people[PLAYER].spells[0].pos = people[PLAYER].position;
 			people[PLAYER].spells[0].init = people[PLAYER].position;
@@ -102,6 +104,9 @@ int main(int argc, char** argv) {
 			people[PLAYER].spellCooldown =  people[PLAYER].spells[people[PLAYER].curSpell].coolDown;
 			people[PLAYER].spellActive = 1;
 		} 
+		if(IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
+			people[2].cDir = 8;
+		}
 		switch(GetKeyPressed()) {
 			case KEY_A :
 				
@@ -126,6 +131,7 @@ int main(int argc, char** argv) {
 					people[j].spells[i].len > 50.0f)) { // too far away from spells' init
 
 						people[j].spells[i].dir = zeroV3;
+						people[j].spells[i].curSprite = 0;
 						people[j].spells[i].pos = (Vector3){0,1,0};
 						people[j].spellActive = 0;
 				}
@@ -135,6 +141,8 @@ int main(int argc, char** argv) {
 					people[j].spells[i].pos.y = -1;
 					people[j].spells[i].init = people[j].spells[i].pos;
 				}
+
+				people[j].spells[i].curSprite = (frame/10)%6;
 			}
 
 			if(people[j].spellCooldown > 0) people[j].spellCooldown--;
@@ -144,8 +152,14 @@ int main(int argc, char** argv) {
 				people[j].curSprite.y = 0;
 			}*/
 			
-			people[j].curSprite.x = ((frame/10)%6)*PSPRITEW;
 			people[j].curSprite.y = people[j].cDir*PSPRITEH;
+
+			if(people[j].cDir != 8) { // 8 is dead
+				people[j].curSprite.x = ((frame/10)%6)*PSPRITEW;
+			} else {
+				people[j].deathFrames += (people[j].deathFrames<=52)?1:0;
+				people[j].curSprite.x = ((people[j].deathFrames/10)%6)*PSPRITEW;
+			}
 			
 		}
 
@@ -175,11 +189,11 @@ int main(int argc, char** argv) {
 				DrawModelWires(ring,zeroV3,1.0f,BLACK);
 				DrawGizmo(zeroV3);
 				
-				DrawBillboard(rendered,people[PLAYER].spells[0].sprites[(frame/10)%4],people[PLAYER].spells[0].pos,1.0f,WHITE);
 
 				DrawBillboardRec(rendered,people[1].spriteSheet,people[1].curSprite,people[1].position,1.0f,WHITE);
 				DrawBillboardRec(rendered,people[2].spriteSheet,people[2].curSprite,people[2].position,1.0f,WHITE);
 
+				DrawBillboardRec(rendered,people[PLAYER].spells[0].spriteSheet,(Rectangle){people[PLAYER].spells[0].curSprite*40,0,40,40},people[PLAYER].spells[0].pos,1.0f,WHITE);
 
 				
 				

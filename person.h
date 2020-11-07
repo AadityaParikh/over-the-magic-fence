@@ -22,6 +22,7 @@ typedef struct Person {
 	Vector3 position;
 	Vector3 direction;
 	int cDir;
+	int deathFrames; // frames since death
 	Rectangle curSprite;
 	Vector3 target;
 	Vector3 momentum;
