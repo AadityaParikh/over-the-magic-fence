@@ -9,6 +9,9 @@
 
 
 #define PLAYER 0
+#define PSPRITEW 30
+#define PSPRITEH 50
+
 
 int main(int argc, char** argv) {
 	int screenWidth = GetMonitorWidth(0);
@@ -42,8 +45,10 @@ int main(int argc, char** argv) {
 	people[PLAYER].spells[0].speed = 0.5f;
 	people[PLAYER].spells[0].coolDown = 60; // 1 sec
 	people[PLAYER].numSpells = 1;
-	camera.position.y = 1; // EDIT THE CAMERA NOT PLAYER POSITION DONT BE A DUMBASS LIKE ME
+	camera.position.y = 1; // don't be a dumbass like me, edit camera pos instead of player pos
 	// player pos is for math use only
+	Vector2 dodgeDir = {0};
+	
 	
 	Vector3 inter = camera.position; // intermediary between camera
 
@@ -56,12 +61,16 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	people[1].sprites[0] = LoadTexture("Art/Sprites/Player movement/Movement frames/Movement 1/sprite_0.png");
-	people[1].position.y = 1;
+	people[1].spriteSheet = LoadTexture("Art/Sprites/people/betty/spritesheet.png");
+	people[1].position.y = 0.84f;
 	people[1].position.x = 1;
+	people[1].curSprite.width = PSPRITEW;
+	people[1].curSprite.height = PSPRITEH;
 	people[1].momentum = (Vector3){0};
-	people[2].sprites[0] = LoadTexture("Art/Sprites/Player movement/Movement frames/Movement 1/sprite_0.png");
-	people[2].position.y = 1;
+	people[2].spriteSheet = LoadTexture("Art/Sprites/people/betty/spritesheet.png");
+	people[2].position.y = 0.84f;
+	people[2].curSprite.width = PSPRITEW;
+	people[2].curSprite.height = PSPRITEH;
 	people[2].momentum = (Vector3){0};
 
 
@@ -82,6 +91,9 @@ int main(int argc, char** argv) {
 		screenDir = normVector3(screenDir);
 		people[PLAYER].direction = screenDir;
 
+		dodgeDir.x = people[PLAYER].direction.x;
+		dodgeDir.y = people[PLAYER].direction.z;
+
 		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&people[PLAYER].spellCooldown==0&&people[PLAYER].spellActive==0) { // spell init
 			people[PLAYER].spells[0].pos = people[PLAYER].position;
 			people[PLAYER].spells[0].init = people[PLAYER].position;
@@ -91,12 +103,12 @@ int main(int argc, char** argv) {
 			people[PLAYER].spellActive = 1;
 		} 
 		switch(GetKeyPressed()) {
+			case KEY_A :
+				
 			case KEY_SPACE :
 				camera.position.x += people[PLAYER].direction.x*5;
 				camera.position.z += people[PLAYER].direction.z*5;
 				break;
-			case KEY_W :
-				
 			default :
 				break;
 		}
@@ -126,6 +138,14 @@ int main(int argc, char** argv) {
 			}
 
 			if(people[j].spellCooldown > 0) people[j].spellCooldown--;
+
+			/*if(people[j].direction.x == 0 || people[j].direction.y == 0 || people[j].direction.z == 0) { // can't compare Vec3 directly it seems
+				people[j].curSprite.x = 0;
+				people[j].curSprite.y = 0;
+			}*/
+			
+			people[j].curSprite.x = ((frame/10)%6)*PSPRITEW;
+			people[j].curSprite.y = people[j].cDir*PSPRITEH;
 			
 		}
 
@@ -157,8 +177,8 @@ int main(int argc, char** argv) {
 				
 				DrawBillboard(rendered,people[PLAYER].spells[0].sprites[(frame/10)%4],people[PLAYER].spells[0].pos,1.0f,WHITE);
 
-				DrawBillboard(rendered,people[1].sprites[0],people[1].position,1.0f,WHITE);
-				DrawBillboard(rendered,people[2].sprites[0],people[2].position,1.0f,WHITE);
+				DrawBillboardRec(rendered,people[1].spriteSheet,people[1].curSprite,people[1].position,1.0f,WHITE);
+				DrawBillboardRec(rendered,people[2].spriteSheet,people[2].curSprite,people[2].position,1.0f,WHITE);
 
 
 				
