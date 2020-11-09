@@ -9,8 +9,6 @@
 
 
 #define PLAYER 0
-#define PSPRITEW 30
-#define PSPRITEH 50
 
 
 int main(int argc, char** argv) {
@@ -39,19 +37,20 @@ int main(int argc, char** argv) {
 
 	Person people[10] = {0};
 	int numPeople = (sizeof(people)/sizeof(people[0])); // for ease of use
-	Person sortedPeople[numPeople]; 
+
+	Person sortedPeople[numPeople]; // for sorting
+	float maxLen = 0;
+	int indexOfMax = 0;
 
 	people[PLAYER].spells[0].name = "fireball";
 	people[PLAYER].spells[0].speed = 0.5f;
 	people[PLAYER].spells[0].coolDown = 60; // 1 sec
 	people[PLAYER].numSpells = 1;
 	camera.position.y = 1; // don't be a dumbass like me, edit camera pos instead of player pos
-	// player pos is for math use only
+	// player follows camera, not the other way around
 	Vector2 dodgeDir = {0};
-	
-	
-	Vector3 inter = camera.position; // intermediary between camera
-
+	Vector2 dodgeRot = {0};
+	int dodgeDirection[4]; // north east south west
 
 	for(int i = 0;i<people[PLAYER].numSpells;i++) { // loading sprite textures
 			char filename[100];
@@ -62,15 +61,13 @@ int main(int argc, char** argv) {
 	people[1].spriteSheet = LoadTexture("Art/Sprites/people/betty/spritesheet.png");
 	people[1].position.y = 0.84f;
 	people[1].position.x = 1;
-	people[1].curSprite.width = PSPRITEW;
-	people[1].curSprite.height = PSPRITEH;
+	people[1].spriteW = 30;
+	people[1].spriteH = 50;
+	people[1].curSprite.width = people[1].spriteW;
+	people[1].curSprite.height = people[1].spriteH;
 	people[1].momentum = (Vector3){0};
-	people[2].spriteSheet = LoadTexture("Art/Sprites/people/betty/spritesheet.png");
-	people[2].position.y = 0.84f;
-	people[2].curSprite.width = PSPRITEW;
-	people[2].curSprite.height = PSPRITEH;
-	people[2].momentum = (Vector3){0};
-
+	people[2] = people[1];
+	people[2].position.x = 0;
 
 	screenWidth = GetMonitorWidth(0);
 	screenHeight = GetMonitorHeight(0);
@@ -96,7 +93,8 @@ int main(int argc, char** argv) {
 			
 		}
 
-		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&people[PLAYER].spellCooldown==0&&people[PLAYER].spellActive==0) { // spell init
+		// LMB & RMB seperate if statements to allow a melee attack and spell at the same time
+		if(IsMouseButtonPressed(MOUSE_LEFT_BUTTON)&&!people[PLAYER].spellCooldown&&!people[PLAYER].spellActive) { // spell init
 			people[PLAYER].spells[0].pos = people[PLAYER].position;
 			people[PLAYER].spells[0].init = people[PLAYER].position;
 			people[PLAYER].spells[0].dir = screenDir;
@@ -106,13 +104,19 @@ int main(int argc, char** argv) {
 		} 
 		if(IsMouseButtonPressed(MOUSE_RIGHT_BUTTON)) {
 			people[2].cDir = 8;
+			people[2].deathFrames = 0;
 		}
 		switch(GetKeyPressed()) {
-			case KEY_A :
-				
 			case KEY_SPACE :
-				camera.position.x += people[PLAYER].direction.x*5;
-				camera.position.z += people[PLAYER].direction.z*5;
+				dodgeDirection[1] = IsKeyPressed(KEY_W);
+				dodgeDirection[2] = IsKeyPressed(KEY_D);
+				dodgeDirection[3] = IsKeyPressed(KEY_S);
+				dodgeDirection[4] = IsKeyPressed(KEY_A);
+				
+
+
+				camera.position.x += dodgeDir.x*2;
+				camera.position.z += dodgeDir.y*2;
 				break;
 			default :
 				break;
@@ -152,13 +156,13 @@ int main(int argc, char** argv) {
 				people[j].curSprite.y = 0;
 			}*/
 			
-			people[j].curSprite.y = people[j].cDir*PSPRITEH;
+			people[j].curSprite.y = people[j].cDir*people[j].spriteH;
 
 			if(people[j].cDir != 8) { // 8 is dead
-				people[j].curSprite.x = ((frame/10)%6)*PSPRITEW;
+				people[j].curSprite.x = ((frame/10)%6)*people[j].spriteW;
 			} else {
 				people[j].deathFrames += (people[j].deathFrames<=52)?1:0;
-				people[j].curSprite.x = ((people[j].deathFrames/10)%6)*PSPRITEW;
+				people[j].curSprite.x = ((people[j].deathFrames/10)%6)*people[j].spriteW;
 			}
 			
 		}
@@ -178,6 +182,10 @@ int main(int argc, char** argv) {
 		sprintf(debugText[11],"\t%s : %f","Speed",people[PLAYER].spells[people[PLAYER].curSpell].speed);
 		sprintf(debugText[12],"\t%s : %f","Distance",people[PLAYER].spells[people[PLAYER].curSpell].len);
 		sprintf(debugText[13],"%s : %d","Key Pressed",GetKeyPressed());
+		sprintf(debugText[14],"%s : %d","Key Pressed W",IsKeyPressed(KEY_W));
+		sprintf(debugText[15],"%s : %d","Key Pressed A",IsKeyPressed(KEY_A));
+		sprintf(debugText[16],"%s : %d","Key Pressed S",IsKeyPressed(KEY_S));
+		sprintf(debugText[17],"%s : %d","Key Pressed D",IsKeyPressed(KEY_D));
 
 		BeginDrawing();
 			ClearBackground(SKYBLUE);
