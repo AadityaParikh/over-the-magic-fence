@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
 				DrawBillboardRec(rendered,people[1].spriteSheet,people[1].curSprite,people[1].position,1.0f,WHITE);
 				DrawBillboardRec(rendered,people[2].spriteSheet,people[2].curSprite,people[2].position,1.0f,WHITE);
 
-				DrawBillboardRec(rendered,people[PLAYER].spells[0].spriteSheet,(Rectangle){people[PLAYER].spells[0].curSprite*40,0,40,40},people[PLAYER].spells[0].pos,1.0f,WHITE);
+				DrawBillboardRec(rendered,people[PLAYER].spells[0].spriteSheet,(Rectangle){people[PLAYER].spells[0].curSprite*32,0,32,32},people[PLAYER].spells[0].pos,1.0f,WHITE);
 
 				
 				
